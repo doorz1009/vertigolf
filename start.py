@@ -1,10 +1,15 @@
 import cocos
+import cocos.layer as cl
+import cocos.director as cd
+import cocos.collision_model as cm
+import cocos.sprite as csp
+import cocos.euclid as eu
 import csv
-import pyglet
+import pyglet.resource as pr
 
-gameWindow = cocos.director.director.init(width=1024, height=768)
-bgLayer = cocos.layer.Layer()
-gameLayer = cocos.layer.Layer()
+gameWindow = cd.director.init(width=1024, height=768)
+bgLayer = cl.Layer()
+gameLayer = cl.Layer()
 
 class RubberBandLine(cocos.draw.Line):
     
@@ -25,7 +30,7 @@ class RubberBandLine(cocos.draw.Line):
         self.start = (0, 0)
         self.end = (0, 0)
 
-class GolfBall(cocos.sprite.Sprite):
+class GolfBall(csp.Sprite):
 
     line = RubberBandLine()
 
@@ -41,12 +46,12 @@ class GolfBall(cocos.sprite.Sprite):
 
     def on_mouse_press(self, x, y, buttons, modifiers):
         gameLayer.add(self.line)
-        px, py = cocos.director.director.get_virtual_coordinates (x, y)
+        px, py = cd.director.get_virtual_coordinates (x, y)
         if self.does_contain_point((px, py)):
             self.line.update_start((px, py))
     
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        px, py = cocos.director.director.get_virtual_coordinates (x, y)
+        px, py = cd.director.get_virtual_coordinates (x, y)
         if self.line.start != (0, 0) and self.line.end != (0, 0):
             self.line.update_end((px, py))
 
@@ -54,22 +59,21 @@ class GolfBall(cocos.sprite.Sprite):
         line_info = self.line.get_line_info()
         self.line.snap()
 
-bg = pyglet.resource.image('Resources/golf_course.png')
-bg_sprite = cocos.sprite.Sprite(bg)
+bg = pr.image('Resources/golf_course.png')
+bg_sprite = csp.Sprite(bg)
 bg_sprite.scale = 0.75
 bgLayer.add(bg_sprite)
 
-ball = pyglet.resource.image('Resources/golf_ball.png')
-ball_sprite = GolfBall(ball)
+ball = pr.image('Resources/golf_ball.png')
 ball_sprite.position = 900, 100
 ball_sprite.scale = 0.1
 
-grass = pyglet.resource.image('Resources/grass.png')
+grass = pr.image('Resources/grass.png')
 
 with open('level.dat') as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=",")
     for row in csv_reader:
-        grass_sprite = cocos.sprite.Sprite(grass)
+        grass_sprite = csp.Sprite(grass)
         grass_sprite.position = int(row[0]), int(row[1])
         grass_sprite.rotation = int(row[2])
         grass_sprite.scale = 0.25
