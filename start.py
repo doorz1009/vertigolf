@@ -34,15 +34,18 @@ class GolfBall(csp.Sprite):
 
     line = RubberBandLine()
 
-    def __init__(self, image):
+    def __init__(self, image, center_x, center_y):
         super(GolfBall, self ).__init__(image)
+        self.position = center_x, center_y
+        self.scale = 0.1
+        self.cshape = cm.CircleShape(eu.Vector2(center_x, center_y), image.width/ (2 / self.scale))
 
         gameWindow.push_handlers(self.on_mouse_press, self.on_mouse_drag, self.on_mouse_release)
 
     def does_contain_point(self, pos):
         return (
-           (abs(pos[0] - self.position[0]) < self.image.width/2) and
-           (abs(pos[1] - self.position[1]) < self.image.width/2))
+            (abs(pos[0] - self.cshape.center[0]) < self.cshape.r) and
+            (abs(pos[1] - self.cshape.center[1]) < self.cshape.r))
 
     def on_mouse_press(self, x, y, buttons, modifiers):
         gameLayer.add(self.line)
@@ -65,6 +68,7 @@ bg_sprite.scale = 0.75
 bgLayer.add(bg_sprite)
 
 ball = pr.image('Resources/golf_ball.png')
+ball_sprite = GolfBall(ball, 900, 100)
 ball_sprite.position = 900, 100
 ball_sprite.scale = 0.1
 
