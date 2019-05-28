@@ -2,6 +2,7 @@ import cocos
 import csv
 import pyglet
 
+gameWindow = cocos.director.director.init(width=1024, height=768)
 bgLayer = cocos.layer.Layer()
 gameLayer = cocos.layer.Layer()
 
