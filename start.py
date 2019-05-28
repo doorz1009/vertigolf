@@ -62,6 +62,12 @@ class GolfBall(csp.Sprite):
         line_info = self.line.get_line_info()
         self.line.snap()
 
+class TerrainSprite(csp.Sprite):
+
+    def __init__(self, image, center_x, center_y, hieght, width):
+        super(TerrainSprite, self).__init__()
+
+
 bg = pr.image('Resources/golf_course.png')
 bg_sprite = csp.Sprite(bg)
 bg_sprite.scale = 0.75
