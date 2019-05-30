@@ -86,9 +86,9 @@ class GolfBall(csp.Sprite):
 
     def on_mouse_release(self, x, y, button, modifiers):
         if self.line.start != (0, 0) and self.line.end != (0, 0):
-        line_info = self.line.get_line_info()
-        self.line.snap()
-        self.do(GravityAction(self.position, line_info))
+            line_info = self.line.get_line_info()
+            self.line.snap()
+            self.do(GravityAction(self.position, line_info))
 
 class TerrainSprite(csp.Sprite):
 
