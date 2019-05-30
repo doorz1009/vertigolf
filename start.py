@@ -92,7 +92,7 @@ class GolfBall(csp.Sprite):
 
 class TerrainSprite(csp.Sprite):
 
-    def __init__(self, image, center_x, center_y, hieght, width):
+    def __init__(self, image, center_x, center_y, height, width):
         super(TerrainSprite, self).__init__()
 
 
