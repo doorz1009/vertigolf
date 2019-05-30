@@ -88,7 +88,7 @@ class GolfBall(csp.Sprite):
         if self.line.start != (0, 0) and self.line.end != (0, 0):
         line_info = self.line.get_line_info()
         self.line.snap()
-            self.do(GravityAction(self.position, line_info))
+        self.do(GravityAction(self.position, line_info))
 
 class TerrainSprite(csp.Sprite):
 
