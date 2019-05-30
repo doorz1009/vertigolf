@@ -1,6 +1,7 @@
 import cocos
 import cocos.layer as cl
 import cocos.director as cd
+import cocos.actions.move_actions as cmove
 import cocos.collision_model as cm
 import cocos.sprite as csp
 import cocos.euclid as eu
@@ -10,6 +11,7 @@ import pyglet.resource as pr
 gameWindow = cd.director.init(width=1024, height=768)
 bgLayer = cl.Layer()
 gameLayer = cl.Layer()
+gravity = -0.2
 
 class RubberBandLine(cocos.draw.Line):
     
@@ -29,6 +31,30 @@ class RubberBandLine(cocos.draw.Line):
     def snap(self):
         self.start = (0, 0)
         self.end = (0, 0)
+
+class GravityAction(cmove.Move):
+    
+    def init(self, pos, force):
+        # Get our local variables set from 
+        self.x_velocity = (force[0][0] - force[1][0]) /10
+        self.y_velocity = (force[0][1] - force[1][1]) /10
+        print(str(self.x_velocity))
+        print(str(self.y_velocity))
+        self.start_pos = pos
+    
+    def start(self):
+        (x, y) = self.start_pos
+        
+        # self.target is the Node being animated by this Action
+        self.target.position = (x, y)  # Start at top of window
+    
+    def step(self, dt):
+        self.y_velocity += gravity
+        (x, y) = self.target.position
+        new_y_pos = y + self.y_velocity
+        new_x_pos = x + self.x_velocity
+
+        self.target.position = (new_x_pos, new_y_pos)     # Set target's position.
 
 class GolfBall(csp.Sprite):
 
@@ -59,8 +85,10 @@ class GolfBall(csp.Sprite):
             self.line.update_end((px, py))
 
     def on_mouse_release(self, x, y, button, modifiers):
+        if self.line.start != (0, 0) and self.line.end != (0, 0):
         line_info = self.line.get_line_info()
         self.line.snap()
+            self.do(GravityAction(self.position, line_info))
 
 class TerrainSprite(csp.Sprite):
 
