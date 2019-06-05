@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="left-down" width="26" height="17" tilewidth="48" tileheight="48" infinite="0" nextlayerid="15" nextobjectid="23">
+ <tileset firstgid="1" name="map_tiles" tilewidth="48" tileheight="48" tilecount="28" columns="7">
+  <image source="grassTileSet.png" width="336" height="192"/>
+  <tile id="0">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="1">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="2">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="3">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="4">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="5">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="6">
+   <objectgroup draworder="index">
+    <object id="11" x="0" y="0.25">
+     <polyline points="0,0 12,0 12,14 18,24 30,24 36,14 36,0 48,0 48,48 0,48 0,0"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="7">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="8">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="9">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="10">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="11">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="12">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="13">
+   <objectgroup draworder="index">
+    <object id="1" x="15.875" y="15.75" width="16.25" height="16.375">
+     <ellipse/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="14">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="15">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="16">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="17">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="21">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="22">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="23">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+  <tile id="24">
+   <objectgroup draworder="index">
+    <object id="1" x="0" y="0" width="48" height="48"/>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <layer id="10" name="map0" width="26" height="17">
+  <data encoding="csv">
+9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,21,0,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,28,0,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,2,2,2,7,2,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,0,0,0,23,23,23,23,23,23,13,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+9,23,23,23,23,23,23,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,
+12,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,13
+</data>
+ </layer>
+ <objectgroup id="11" name="colliders0">
+  <object id="10" x="1" y="0" width="1247" height="47"/>
+  <object id="11" x="2" y="45" width="46" height="772"/>
+  <object id="12" x="11" y="771" width="1236" height="44"/>
+  <object id="13" x="49" y="579" width="334" height="44"/>
+  <object id="14" x="337" y="432" width="44" height="151"/>
+  <object id="15" x="481" y="336" width="334" height="50"/>
+  <object id="16" x="768" y="192" width="46" height="154"/>
+  <object id="17" x="959" y="192" width="155" height="47"/>
+  <object id="18" x="1140" y="192" width="61" height="47"/>
+  <object id="19" x="1112" y="215" width="29" height="24"/>
+  <object id="20" x="1201" y="45" width="46" height="740"/>
+ </objectgroup>
+ <objectgroup id="14" name="regions0">
+  <object id="21" name="spawn_point" x="60" y="539" width="24" height="25"/>
+  <object id="22" name="hole1" x="1116" y="202" width="25" height="12"/>
+ </objectgroup>
+</map>

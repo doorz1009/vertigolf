@@ -6,11 +6,12 @@ import cocos.collision_model as cm
 import cocos.sprite as csp
 import cocos.euclid as eu
 import csv
-import pyglet.resource as pr
+import xml.etree.ElementTree as et
+import pyglet
 
-gameWindow = cd.director.init(width=1024, height=768)
+gameWindow = cd.director.init(width=1248, height=816)
 bgLayer = cl.Layer()
-gameLayer = cl.Layer()
+game_layer = cl.Layer()
 gravity = -0.2
 
 class RubberBandLine(cocos.draw.Line):
@@ -32,15 +33,18 @@ class RubberBandLine(cocos.draw.Line):
         self.start = (0, 0)
         self.end = (0, 0)
 
+
 class GravityAction(cmove.Move):
     
-    def init(self, pos, force):
+    def __init__(self, pos, force):
+        super(GravityAction, self).__init__()
         # Get our local variables set from 
-        self.x_velocity = (force[0][0] - force[1][0]) /10
-        self.y_velocity = (force[0][1] - force[1][1]) /10
+        self.x_velocity = (force[0][0] - force[1][0]) / 10
+        self.y_velocity = (force[0][1] - force[1][1]) / 10
         print(str(self.x_velocity))
         print(str(self.y_velocity))
         self.start_pos = pos
+        self.scheduled_to_remove = False
     
     def start(self):
         (x, y) = self.start_pos
@@ -58,13 +62,13 @@ class GravityAction(cmove.Move):
 
 class GolfBall(csp.Sprite):
 
-    line = RubberBandLine()
-
-    def __init__(self, image, center_x, center_y):
-        super(GolfBall, self ).__init__(image)
+    def __init__(self, center_x, center_y):
+        ball = pyglet.resource.image('Resources/golf_ball.png')
+        super(GolfBall, self ).__init__(ball)
         self.position = center_x, center_y
+        self.line = RubberBandLine()
         self.scale = 0.1
-        self.cshape = cm.CircleShape(eu.Vector2(center_x, center_y), image.width/ (2 / self.scale))
+        self.cshape = cm.CircleShape(eu.Vector2(center_x, center_y), ball.width/ (2 / self.scale))
 
         gameWindow.push_handlers(self.on_mouse_press, self.on_mouse_drag, self.on_mouse_release)
 
@@ -74,13 +78,13 @@ class GolfBall(csp.Sprite):
             (abs(pos[1] - self.cshape.center[1]) < self.cshape.r))
 
     def on_mouse_press(self, x, y, buttons, modifiers):
-        gameLayer.add(self.line)
-        px, py = cd.director.get_virtual_coordinates (x, y)
+        game_layer.add(self.line)
+        px, py = cd.director.get_virtual_coordinates(x, y)
         if self.does_contain_point((px, py)):
             self.line.update_start((px, py))
     
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        px, py = cd.director.get_virtual_coordinates (x, y)
+        px, py = cd.director.get_virtual_coordinates(x, y)
         if self.line.start != (0, 0) and self.line.end != (0, 0):
             self.line.update_end((px, py))
 
@@ -92,32 +96,57 @@ class GolfBall(csp.Sprite):
 
 class TerrainSprite(csp.Sprite):
 
-    def __init__(self, image, center_x, center_y, height, width):
-        super(TerrainSprite, self).__init__()
+    def __init__(self, image, position=(0,0)):
+        super(TerrainSprite, self).__init__(image)
+        self.position = position
 
 
-bg = pr.image('Resources/golf_course.png')
+bg = pyglet.resource.image('Resources/golf_course.png')
 bg_sprite = csp.Sprite(bg)
 bg_sprite.scale = 0.75
 bgLayer.add(bg_sprite)
 
-ball = pr.image('Resources/golf_ball.png')
-ball_sprite = GolfBall(ball, 900, 100)
+ball = pyglet.resource.image('Resources/golf_ball.png')
+ball_sprite = GolfBall(900, 100)
 ball_sprite.position = 900, 100
 ball_sprite.scale = 0.1
 
-grass = pr.image('Resources/grass.png')
+grass = pyglet.resource.image('Resources/grass.png')
 
-with open('level.dat') as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=",")
-    for row in csv_reader:
-        grass_sprite = csp.Sprite(grass)
-        grass_sprite.position = int(row[0]), int(row[1])
-        grass_sprite.rotation = int(row[2])
-        grass_sprite.scale = 0.25
-        gameLayer.add(grass_sprite)
 
-gameLayer.add(ball_sprite)
+tree = et.parse('Resources/Level1.tmx')
+root = tree.getroot()
+data = root.find('layer/data').text
+data = data.replace('\n', '')
+data_list = data.split(",")
 
-main_scene = cocos.scene.Scene (bgLayer, gameLayer)
+tile_set = pyglet.resource.image('Resources/grassTileSet.png')
+mapped_tileset = pyglet.image.ImageGrid(tile_set, 4, 7)
+
+
+x = 24
+y = 792
+for tile_id in data_list:
+    tid = int(tile_id)
+    if tid:
+        converted_id = (7 * (4 - (tid / 7))) - (7 - (tid % 7))
+        print(str(converted_id) + ' at (' + str(x % 1248) + ','+ str(y % 816) + ')')
+        # print(str(tid) + '\t' + str(converted_id) + ' \tx:' + str(x % 1248) + ' \ty:' + str(y % 816))
+        game_layer.add(TerrainSprite(mapped_tileset[tid - 1], ((x % 1248), (y % 816))))
+    x += 48
+    if x % 1272 == 0:
+        y -= 48
+
+# with open('level.dat') as csv_file:
+#     csv_reader = csv.reader(csv_file, delimiter=",")
+#     for row in csv_reader:
+#         grass_sprite = csp.Sprite(grass)
+#         grass_sprite.position = int(row[0]), int(row[1])
+#         grass_sprite.rotation = int(row[2])
+#         grass_sprite.scale = 0.25
+#         game_layer.add(grass_sprite)
+
+game_layer.add(ball_sprite)
+
+main_scene = cocos.scene.Scene(bgLayer, game_layer)
 cocos.director.director.run (main_scene)
