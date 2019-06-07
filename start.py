@@ -33,7 +33,6 @@ class RubberBandLine(cocos.draw.Line):
         self.start = (0, 0)
         self.end = (0, 0)
 
-
 class GravityAction(cmove.Move):
     
     def __init__(self, pos, force):
@@ -60,15 +59,116 @@ class GravityAction(cmove.Move):
 
         self.target.position = (new_x_pos, new_y_pos)     # Set target's position.
 
+class GameSprite(cocos.sprite.Sprite):
+    """
+    This class exists to provide several features shared by almost
+    every game object.
+    
+    Each instance has the following:
+    A unique identifier
+    A motion vector to describe how the instances should move.
+    A radius used to detect collisions with other GameSprite 
+        instances
+    A flag, shouldDie, used to signal when the instance should be
+    removed from the game.
+    
+    Instances automatically move according to each instance's
+    motion vector. Positions "wrap" meaning that if an instance moves 
+    off the screen, it reappears on the opposite side of the screen.
+    """
+    next_unique_id = 1
+    live_instances = {} # map unique_id to instance with that id
+
+    @staticmethod
+    def handleCollisions():
+        """ """
+        objects = GameSprite.live_instances.values()
+        for object in objects:
+            for other_object in objects:
+                if other_object.id != object.id and object.type == 'ball' and\
+                        object.isHitByCircle(other_object.position,\
+                        other_object.cshape):
+                    object.onCollision(other_object)
+    @staticmethod
+
+    def __init__(self, image, type, id=None, position=(0, 0), scale=1):
+        """ """
+        super( GameSprite, self ).__init__( image, position, scale)
+        if not id:
+            self.id = GameSprite.next_unique_id
+        else:
+            self.id = id
+        
+        GameSprite.next_unique_id += 1
+        self.type = type
+        GameSprite.live_instances[self.id] = self
+    
+    def detectCollision(self, geom):
+        """ Returns True if and only if the receiver's circle 
+            calculated using the receiver's position and radius 
+            overlaps the circle calculated using the center and radius 
+            arguments to this method. 
+        """
+        ul = geom[0]
+        lr = geom[1]
+        if self.position[0]:
+            
+
+        total_radius = self.radius + radius
+        total_radius_squared = total_radius * total_radius
+        x, y = self.position
+        delta_x = center[0] - x
+        delta_y = center[1] - y
+        distance_squared = delta_x * delta_x + delta_y * delta_y
+        
+        return distance_squared < total_radius_squared
+
+    def processCollision(self, other_object):
+        """ """
+        playLayer = self.get_ancestor(PlayLayer)
+        if playLayer:
+            playLayer.addExplosion(self.position)
+        return True
+    
+    def onCollision(self, other_object):
+        """ """
+        if self.processCollision(other_object):
+            self.markForDeath()
+
+    def step(self, dt):
+        """ Perform any updates that should occur after dt seconds 
+            from the last update.
+        """
+        if self.shouldDie:
+            self.stop()
+            self.kill()
+            if self.id in GameSprite.live_instances:
+                del GameSprite.live_instances[self.id]
+        else:
+            width, height = cocos.director.director.get_window_size()
+            dx = self.motion_vector[0] * self.getVelocityMultiplier()
+            dy = self.motion_vector[1] * self.getVelocityMultiplier()
+            x = self.position[0] + dx * dt
+            y = self.position[1] + dy * dt
+            
+            if x < 0: x += width
+            elif x > width: x -= width
+            
+            if y < 0: y += height
+            elif y > height: y -= height
+            
+            self.position = (x, y)
+
 class GolfBall(csp.Sprite):
 
-    def __init__(self, center_x, center_y):
-        ball = pyglet.resource.image('Resources/golf_ball.png')
-        super(GolfBall, self ).__init__(ball)
+    def __init__(self, image, center_x, center_y):
+        super(GolfBall, self ).__init__(image)
         self.position = center_x, center_y
         self.line = RubberBandLine()
-        self.scale = 0.1
-        self.cshape = cm.CircleShape(eu.Vector2(center_x, center_y), ball.width/ (2 / self.scale))
+        self.scale = 1
+        self.cshape = cm.CircleShape(eu.Vector2(center_x, center_y), image.width/ (2 / self.scale))
+
+        self.do(GravityAction(self.position, (self.position, self.position)))
 
         gameWindow.push_handlers(self.on_mouse_press, self.on_mouse_drag, self.on_mouse_release)
 
@@ -96,20 +196,24 @@ class GolfBall(csp.Sprite):
 
 class TerrainSprite(csp.Sprite):
 
-    def __init__(self, image, position=(0,0)):
-        super(TerrainSprite, self).__init__(image)
+    def __init__(self, image_id, position=(0,0)):
+        super(TerrainSprite, self).__init__(mapped_tileset[image_id])
         self.position = position
+
+        if image_id == 20 or image_id == 27:
+            self.cshape = None
+        if image_id == 6:
+            # self.cshape = rect(hole_geom)
+            self.cshape = 0
+        else:
+            self.cshape = (position[0], position[1], position[0] + 48, position[1] + 48)
+            self.cshape = 0
 
 
 bg = pyglet.resource.image('Resources/golf_course.png')
 bg_sprite = csp.Sprite(bg)
 bg_sprite.scale = 0.75
 bgLayer.add(bg_sprite)
-
-ball = pyglet.resource.image('Resources/golf_ball.png')
-ball_sprite = GolfBall(900, 100)
-ball_sprite.position = 900, 100
-ball_sprite.scale = 0.1
 
 grass = pyglet.resource.image('Resources/grass.png')
 
@@ -120,7 +224,7 @@ data = root.find('layer/data').text
 data = data.replace('\n', '')
 data_list = data.split(",")
 
-tile_set = pyglet.resource.image('Resources/grassTileSet.png')
+tile_set = pyglet.resource.image('Resources/tiles_for_loading.png')
 mapped_tileset = pyglet.image.ImageGrid(tile_set, 4, 7)
 
 
@@ -128,13 +232,13 @@ x = 24
 y = 792
 for tile_id in data_list:
     tid = int(tile_id)
-    if tid:
-        converted_id = (7 * (4 - (tid / 7))) - (7 - (tid % 7))
-        print(str(converted_id) + ' at (' + str(x % 1248) + ','+ str(y % 816) + ')')
-        # print(str(tid) + '\t' + str(converted_id) + ' \tx:' + str(x % 1248) + ' \ty:' + str(y % 816))
-        game_layer.add(TerrainSprite(mapped_tileset[tid - 1], ((x % 1248), (y % 816))))
+    if tid != 0:
+        if tid == 14:
+            game_layer.add(GolfBall(mapped_tileset[tid - 1], (x % 1248), (y % 816)))
+        else:
+            game_layer.add(TerrainSprite(tid - 1, ((x % 1248), (y % 816))))
     x += 48
-    if x % 1272 == 0:
+    if (x - 24) % 1248 == 0:
         y -= 48
 
 # with open('level.dat') as csv_file:
@@ -145,8 +249,6 @@ for tile_id in data_list:
 #         grass_sprite.rotation = int(row[2])
 #         grass_sprite.scale = 0.25
 #         game_layer.add(grass_sprite)
-
-game_layer.add(ball_sprite)
 
 main_scene = cocos.scene.Scene(bgLayer, game_layer)
 cocos.director.director.run (main_scene)
