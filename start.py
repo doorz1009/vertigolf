@@ -55,10 +55,41 @@ class GravityAction(cmove.Move):
     def step(self, dt):
         self.y_velocity += gravity
         (x, y) = self.target.position
+
+        new_y_pos = y + self.y_velocity
+        new_x_pos = x + self.x_velocity
+        coll_info = self.target.handleCollisions((new_x_pos, new_y_pos), self.target.cshape.r)
+
+        if ('horizontal' in coll_info[0]):
+            if self.y_velocity != 0:
+                self.y_velocity *= -0.5
+            if self.y_velocity < 0.2:
+                self.y_velocity = 0
+            
+            if self.x_velocity != 0:
+                self.x_velocity *= 0.9
+            if self.x_velocity < 0.01:
+                self.x_velocity = 0
+            
         new_y_pos = y + self.y_velocity
         new_x_pos = x + self.x_velocity
 
+        if ('vertical' in coll_info[0]):
+            if self.x_velocity != 0:
+                self.x_velocity *= -0.8
+            if self.x_velocity**2 < 0.1:
+                self.x_velocity = 0
+
+            new_x_pos = x + self.x_velocity
+
+        if 'vertical' in coll_info[0] and 'horizontal' in coll_info[0]:
+            print('corner collision detected')
+
         self.target.position = (new_x_pos, new_y_pos)     # Set target's position.
+        self.target.cshape.center = (new_x_pos, new_y_pos)     # Set target's position.
+        
+        if self.x_velocity == 0 and self.y_velocity == 0:
+            self.target.stop()
 
 class GameSprite(cocos.sprite.Sprite):
     """
