@@ -104,15 +104,30 @@ class GameSprite(cocos.sprite.Sprite):
         self.type = type
         GameSprite.live_instances[self.id] = self
     
-    def detectCollision(self, geom):
+    def detectCollision(self, geom, center, r, is_hole):
         """ Returns True if and only if the receiver's circle 
             calculated using the receiver's position and radius 
             overlaps the circle calculated using the center and radius 
             arguments to this method. 
         """
-        ul = geom[0]
-        lr = geom[1]
-        if self.position[0]:
+        if is_hole == False:
+            top_line = self.dist(geom[0], center, r)
+            bottom_line = self.dist(geom[2], center, r)
+            right_line = self.dist(geom[1], center, r)
+            left_line = self.dist(geom[3], center, r)
+            coll_type = ''
+            min_dist = 100
+            if top_line < r or bottom_line < r:
+                # Collision with horizontal surface
+                coll_type += 'horizontal'
+                min_dist = min(top_line, bottom_line)
+            if right_line < r or left_line < r:
+                # Collision with vertical surface
+                coll_type += 'vertical'
+                min_dist = min(min_dist, left_line, right_line)
+            if coll_type == '':
+                coll_type = 'none'
+            return [coll_type, min_dist]
             
 
 class GolfBall(GameSprite):
