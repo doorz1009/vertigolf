@@ -104,6 +104,37 @@ class GameSprite(cocos.sprite.Sprite):
         self.type = type
         GameSprite.live_instances[self.id] = self
     
+    def dist(self, line, center, radius):
+        # Params:
+        # center = (x, y) [tuple]
+        # line = ((x1, y1), (x2, y2)) [tuple of tuples]
+        x = center[0]
+        y = center[1]
+        x1 = line[0][0]
+        x2 = line[1][0]
+        y1 = line[0][1]
+        y2 = line[1][1]
+
+        if x1 == x2:
+            # if x1 = x2 then we are dealing with a vertical line
+            if (y1 + radius < y) or (y2 - radius > y):
+                return 100
+            else:
+                minDist = min(math.sqrt((x - x1)**2 + (y - y1)**2), \
+                    math.sqrt((x - x2)**2 + (y - y2)**2),\
+                    abs(x - x1))
+                return minDist
+
+        else:
+            # Otherwise we are dealing with a horizontal line
+            if (x1 - radius > x) or (x2 + radius < x):
+                return 100
+            else:
+                minDist = min(math.sqrt((x - x1)**2 + (y - y1)**2), \
+                    math.sqrt((x - x2)**2 + (y - y2)**2),\
+                    abs(y - y1))
+                return minDist
+
     def detectCollision(self, geom, center, r, is_hole):
         """ Returns True if and only if the receiver's circle 
             calculated using the receiver's position and radius 
