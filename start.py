@@ -41,8 +41,6 @@ class GravityAction(cmove.Move):
         # Get our local variables set from 
         self.x_velocity = (force[0][0] - force[1][0]) / 10
         self.y_velocity = (force[0][1] - force[1][1]) / 10
-        print(str(self.x_velocity))
-        print(str(self.y_velocity))
         self.start_pos = pos
         self.scheduled_to_remove = False
     
