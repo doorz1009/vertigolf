@@ -195,20 +195,33 @@ class GolfBall(csp.Sprite):
             self.line.snap()
             self.do(GravityAction(self.position, line_info))
 
-class TerrainSprite(csp.Sprite):
+class TerrainSprite(GameSprite):
 
-    def __init__(self, image_id, position=(0,0)):
-        super(TerrainSprite, self).__init__(mapped_tileset[image_id])
+    def __init__(self, image_id, position=(0,0), is_hole=False):
+        super(TerrainSprite, self).__init__(mapped_tileset[image_id], 'grass', None, position)
         self.position = position
+        x = position[0]
+        y = position[1]
+        self.is_hole = is_hole
 
         if image_id == 20 or image_id == 27:
             self.cshape = None
         if image_id == 6:
             # self.cshape = rect(hole_geom)
-            self.cshape = 0
+            self.cshape = (((x-24, y+24), (x +24, y + 24)),\
+                           ((x + 24, y + 24), (x + 24, y-24)),\
+                           ((x - 24, y - 24), (x + 24, y-24)),\
+                           ((x - 24, y + 24), (x - 24, y - 24)))
         else:
-            self.cshape = (position[0], position[1], position[0] + 48, position[1] + 48)
-            self.cshape = 0
+            # Line order:
+            # top-left -> top-right
+            # top-right V bottom-right
+            # bottom-left -> bottom-right
+            # top-left V bottom-left
+            self.cshape = (((x - 24, y + 24), (x + 24, y + 24)),\
+                           ((x + 24, y + 24), (x + 24, y - 24)),\
+                           ((x - 24, y - 24), (x + 24, y - 24)),\
+                           ((x - 24, y + 24), (x - 24, y - 24)))
 
 
 bg = pyglet.resource.image('Resources/golf_course.png')
