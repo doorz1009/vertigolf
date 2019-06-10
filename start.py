@@ -13,6 +13,7 @@ gameWindow = cd.director.init(width=1248, height=816)
 bgLayer = cl.Layer()
 game_layer = cl.Layer()
 gravity = -0.2
+tile_size = 48
 
 class RubberBandLine(cocos.draw.Line):
     
