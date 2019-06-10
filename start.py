@@ -216,9 +216,6 @@ bg_sprite = csp.Sprite(bg)
 bg_sprite.scale = 0.75
 bgLayer.add(bg_sprite)
 
-grass = pyglet.resource.image('Resources/grass.png')
-
-
 tree = et.parse('Resources/Level1.tmx')
 root = tree.getroot()
 data = root.find('layer/data').text
@@ -235,21 +232,12 @@ for tile_id in data_list:
     tid = int(tile_id)
     if tid != 0:
         if tid == 14:
-            game_layer.add(GolfBall(mapped_tileset[tid - 1], (x % 1248), (y % 816)))
+            game_layer.add(GolfBall(mapped_tileset[tid - 1], ((x % 1248), (y % 816))))
         else:
-            game_layer.add(TerrainSprite(tid - 1, ((x % 1248), (y % 816))))
+            game_layer.add(TerrainSprite(tid - 1, ((x % 1248), (y % 816)), False))
     x += 48
     if (x - 24) % 1248 == 0:
         y -= 48
-
-# with open('level.dat') as csv_file:
-#     csv_reader = csv.reader(csv_file, delimiter=",")
-#     for row in csv_reader:
-#         grass_sprite = csp.Sprite(grass)
-#         grass_sprite.position = int(row[0]), int(row[1])
-#         grass_sprite.rotation = int(row[2])
-#         grass_sprite.scale = 0.25
-#         game_layer.add(grass_sprite)
 
 main_scene = cocos.scene.Scene(bgLayer, game_layer)
 cocos.director.director.run (main_scene)
