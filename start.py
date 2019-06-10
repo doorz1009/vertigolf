@@ -81,20 +81,20 @@ class GameSprite(cocos.sprite.Sprite):
     live_instances = {} # map unique_id to instance with that id
 
     @staticmethod
-    def handleCollisions():
+    def handleCollisions(center, radius):
         """ """
         objects = GameSprite.live_instances.values()
+        coll_info = ['none', 100]
         for object in objects:
-            for other_object in objects:
-                if other_object.id != object.id and object.type == 'ball' and\
-                        object.isHitByCircle(other_object.position,\
-                        other_object.cshape):
-                    object.onCollision(other_object)
-    @staticmethod
+            if object.type != 'ball':
+                coll_info = object.detectCollision(object.cshape, center, radius, False)
+                if coll_info[0] != 'none':
+                    return coll_info
+        return coll_info
 
     def __init__(self, image, type, id=None, position=(0, 0), scale=1):
         """ """
-        super( GameSprite, self ).__init__( image, position, scale)
+        super(GameSprite, self).__init__(image, position, scale)
         if not id:
             self.id = GameSprite.next_unique_id
         else:
