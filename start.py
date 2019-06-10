@@ -6,6 +6,7 @@ import cocos.collision_model as cm
 import cocos.sprite as csp
 import cocos.euclid as eu
 import csv
+import math
 import xml.etree.ElementTree as et
 import pyglet
 
