@@ -115,59 +115,15 @@ class GameSprite(cocos.sprite.Sprite):
         if self.position[0]:
             
 
-        total_radius = self.radius + radius
-        total_radius_squared = total_radius * total_radius
-        x, y = self.position
-        delta_x = center[0] - x
-        delta_y = center[1] - y
-        distance_squared = delta_x * delta_x + delta_y * delta_y
+class GolfBall(GameSprite):
         
-        return distance_squared < total_radius_squared
-
-    def processCollision(self, other_object):
-        """ """
-        playLayer = self.get_ancestor(PlayLayer)
-        if playLayer:
-            playLayer.addExplosion(self.position)
-        return True
-    
-    def onCollision(self, other_object):
-        """ """
-        if self.processCollision(other_object):
-            self.markForDeath()
-
-    def step(self, dt):
-        """ Perform any updates that should occur after dt seconds 
-            from the last update.
-        """
-        if self.shouldDie:
-            self.stop()
-            self.kill()
-            if self.id in GameSprite.live_instances:
-                del GameSprite.live_instances[self.id]
-        else:
-            width, height = cocos.director.director.get_window_size()
-            dx = self.motion_vector[0] * self.getVelocityMultiplier()
-            dy = self.motion_vector[1] * self.getVelocityMultiplier()
-            x = self.position[0] + dx * dt
-            y = self.position[1] + dy * dt
-            
-            if x < 0: x += width
-            elif x > width: x -= width
-            
-            if y < 0: y += height
-            elif y > height: y -= height
-            
-            self.position = (x, y)
-
-class GolfBall(csp.Sprite):
-
-    def __init__(self, image, center_x, center_y):
-        super(GolfBall, self ).__init__(image)
-        self.position = center_x, center_y
+    def __init__(self, image, center):
+        super(GolfBall, self).__init__(image, 'ball', None, center)
+        self.position = center
         self.line = RubberBandLine()
         self.scale = 1
-        self.cshape = cm.CircleShape(eu.Vector2(center_x, center_y), image.width/ (2 / self.scale))
+        self.cshape = cm.CircleShape(((center[0]), (center[1])), 8 * self.scale)
+        self.schedule_to_stop = False
 
         self.do(GravityAction(self.position, (self.position, self.position)))
 
