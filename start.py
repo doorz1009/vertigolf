@@ -101,22 +101,7 @@ class GravityAction(cmove.Move):
 
 
 class GameSprite(cocos.sprite.Sprite):
-    """
-    This class exists to provide several features shared by almost
-    every game object.
-    
-    Each instance has the following:
-    A unique identifier
-    A motion vector to describe how the instances should move.
-    A radius used to detect collisions with other GameSprite 
-        instances
-    A flag, shouldDie, used to signal when the instance should be
-    removed from the game.
-    
-    Instances automatically move according to each instance's
-    motion vector. Positions "wrap" meaning that if an instance moves 
-    off the screen, it reappears on the opposite side of the screen.
-    """
+
     next_unique_id = 1
     live_instances = {}  # map unique_id to instance with that id
 
@@ -124,13 +109,12 @@ class GameSprite(cocos.sprite.Sprite):
     def handleCollisions(center, radius, vel):
         """ """
         objects = GameSprite.live_instances.values()
-        coll_info = ['none', 100]
         ret_coll = []  # type: List[float]
         for sprite in objects:
-            if sprite.type != 'ball':
-                reflect_angle = sprite.detectCollision(sprite.cshape, center, radius, vel, False)
-                if reflect_angle[0] != 'none':
-                    ret_coll[len(ret_coll)] = reflect_angle
+            if sprite.type != 'ball' and sprite.cshape != None:
+                reflect_info = sprite.detectCollision(sprite.cshape, center, radius, vel, False)
+                if reflect_info[0] != 0 and reflect_info[1] !=0:
+                    ret_coll[len(ret_coll)] = reflect_info
         return ret_coll
 
     def __init__(self, image, type, id=None, position=(0, 0), scale=1):
@@ -205,20 +189,20 @@ class GameSprite(cocos.sprite.Sprite):
 
     def lineSegIntersect(self, line1, line2):
         # calculate line info for first line
-        l1_x1 = line1[0][0]
-        l1_x2 = line1[1][0]
-        l1_y1 = line1[0][1]
-        l1_y2 = line1[1][1]
+        l1_x1 = line1[0][0] # type: int
+        l1_x2 = line1[1][0] # type: int
+        l1_y1 = line1[0][1] # type: int
+        l1_y2 = line1[1][1] # type: int
 
         A1 = l1_y2 - l1_y1
         B1 = l1_x1 - l1_x2
         C1 = A1 * l1_x1 + B1 * l1_y1
 
         # calculate line info for second line
-        l2_x1 = line2[0][0]
-        l2_x2 = line2[1][0]
-        l2_y1 = line2[0][1]
-        l2_y2 = line2[1][1]
+        l2_x1 = line2[0][0] # type: int
+        l2_x2 = line2[1][0] # type: int
+        l2_y1 = line2[0][1] # type: int
+        l2_y2 = line2[1][1] # type: int
 
         A2 = l2_y2 - l2_y1
         B2 = l2_x1 - l2_x2
@@ -234,50 +218,97 @@ class GameSprite(cocos.sprite.Sprite):
             # Return where intersection will occur, determine if it is within radius later.
             return (x, y)
 
-    def detectCollision(self, geom = ((0, 0), (0, 0)), center = (0.0, 0.0), r = 0, vel = (0.0, 0.0), is_hole = False):
-        """ Returns True if and only if the receiver's circle 
-            calculated using the receiver's position and radius 
-            overlaps the circle calculated using the center and radius 
-            arguments to this method.
-            :param geom - n line segments represented as two points
-        """
-        if is_hole == False:
-            for line in geom:
-                a = self.lineSegIntersect(line, vel)
-                b = self.closestPlaceOnLine(line, vel[1])
-                c = self.closestPlaceOnLine(vel, line[0])
-                d = self.closestPlaceOnLine(vel, line[1])
-                p1 = self.closestPlaceOnLine(line, center)
-                vel_abs = self.euclDist(vel[0], vel[1])
-                p2 = (0.0, 0.0)
-                if ((a != 'parallel' and self.euclDist(a, center) < vel_abs) or self.euclDist(b, vel[1]) < r or
-                        self.euclDist(c, line[0]) < r or self.euclDist(d, line[1]) < r):
-                    if (line[0][0] <= a[0] and a[0] <= line[1][0]) and \
-                        (line[1][0] <= a[1] and a[1] <= line[1][1]):
-                        vel_mod = vel / vel_abs
-                        a_c = self.euclDist(a, center)
-                        p1_c = self.euclDist(p1, center)
-                        diff = a_c / p1_c
-                        first_two = (r * (self.euclDist(a, center) / self.euclDist(p1, center)))
-                        anti_vel_vect = first_two * vel_mod
-                        p2 = a - anti_vel_vect
-            top_line = self.closestPlaceOnLine(geom[0], center)
-            bottom_line = self.closestPlaceOnLine(geom[2], center)
-            right_line = self.closestPlaceOnLine(geom[1], center)
-            left_line = self.closestPlaceOnLine(geom[3], center)
-            coll_type = ''
-            min_dist = 100
-            if top_line < r or bottom_line < r:
-                # Collision with horizontal surface
-                coll_type += 'horizontal'
-                min_dist = min(top_line, bottom_line)
-            if right_line < r or left_line < r:
-                # Collision with vertical surface
-                coll_type += 'vertical'
-                min_dist = min(min_dist, left_line, right_line)
-            if coll_type == '':
-                coll_type = 'none'
-            return [coll_type, min_dist]
+    def isPointOnLine(self, point, line):
+        return (line[0][0] <= point[0] and point[0] <= line[1][0]) and \
+                (line[1][0] <= point[1] and point[1] <= line[1][1])
+
+    def detectCollision(self, geom, center, r, vel, is_hole):
+        # type: (list[((int, int), (int, int))], (int, int), int, (float, float), bool) -> list[float, float]
+
+        # if is_hole == False:
+        for line in geom:
+            """
+            a: where the velocity vector would intersect the ray
+            b: the closest point on the ray to the end of the movement vector
+            c: the closest point on the movement vector to the start of the ray
+            d: the closest point on the movement vector to the end of the ray
+            """
+            ret = [] # type: list[float, float]
+            a = self.lineSegIntersect(line, vel)        # type: (int, int)
+            b = self.closestPlaceOnLine(line, vel[1])   # type: (int, int)
+            c = self.closestPlaceOnLine(vel, line[0])   # type: (int, int)
+            d = self.closestPlaceOnLine(vel, line[1])   # type: (int, int)
+            p1 = self.closestPlaceOnLine(line, center)  # type: (int, int)
+            vel_abs = self.euclDist(vel[0], vel[1])     # type: float
+            p2 = (0.0, 0.0)                             # type: (float, float)
+            if ((a != 'parallel' and self.isPointOnLine(a, vel) and self.isPointOnLine(a, line)) or
+                    (self.euclDist(b, vel[1]) < r and self.isPointOnLine(b, line)) or
+                    (self.euclDist(c, line[0]) < r and self.isPointOnLine(c, vel)) or
+                    (self.euclDist(d, line[1]) < r and self.isPointOnLine(d, vel))):
+                """
+                There is a possible collision if:
+                a is on the line and on the movement vector
+                b is < r away from the end of the movement vector and is on the ray
+                c is < r from the start of the ray and is on the movement vector
+                d is < r from the end of the ray and is on the movement vector
+                """
+                vel_unit = numpy.divide(vel, vel_abs)
+                a_c = self.euclDist(a, center)
+                p1_c = self.euclDist(p1, center)
+                diff = a_c / p1_c
+                similar = (r * (self.euclDist(a, center) / self.euclDist(p1, center)))
+                anti_vel_vect = similar * vel_unit
+                p2 = numpy.subtract(a, anti_vel_vect)
+                pc = self.closestPlaceOnLine(line, p2)
+                if self.isPointOnLine(pc, line):
+                    # Collision with middle of ray. Do reflection collision
+                    p3 = numpy.add(p2, numpy.subtract(p1, pc))
+                    r_vec = numpy.subtract(pc, numpy.add(2 * (numpy.subtract(p3, p2)), p2))
+                    r_unit_vec = numpy.divide(r_vec, self.euclDist(r_vec[0], r_vec[1]))
+                    new_vel_vec = numpy.multiply(vel_abs, r_unit_vec)
+                else:
+                    # Collision with end-point of ray. Do circle collision
+                    self.point_to_use = (0.0, 0.0)
+                    self.ray_point = (0.0, 0.0)
+                    if (self.euclDist(c, line[0]) < r):
+                        # Collision with start of ray
+                        self.point_to_use = c
+                        self.ray_point = line[0]
+                    else:
+                        # Collision with end of ray
+                        self.point_to_use = d
+                        self.ray_point = line[1]
+                    back_dist = numpy.sqrt(self.euclDist(self.point_to_use, self.ray_point)**2 - r**2)
+                    c_x = self.point_to_use[0] - back_dist * (vel[0] / vel_abs)
+                    c_y = self.point_to_use[1] - back_dist * (vel[1] / vel_abs)
+                    collision_pt = (c_x, c_y)
+                    r_vec = (self.point_to_use, collision_pt)
+                    normal_r_vec = numpy.divide(r_vec, r)
+                    new_vel_vec = numpy.multiply(normal_r_vec, vel_abs)
+            else:
+                return [0, 0]
+
+
+
+
+
+            # top_line = self.closestPlaceOnLine(geom[0], center)
+            # bottom_line = self.closestPlaceOnLine(geom[2], center)
+            # right_line = self.closestPlaceOnLine(geom[1], center)
+            # left_line = self.closestPlaceOnLine(geom[3], center)
+            # coll_type = ''
+            # min_dist = 100
+            # if top_line < r or bottom_line < r:
+            #     # Collision with horizontal surface
+            #     coll_type += 'horizontal'
+            #     min_dist = min(top_line, bottom_line)
+            # if right_line < r or left_line < r:
+            #     # Collision with vertical surface
+            #     coll_type += 'vertical'
+            #     min_dist = min(min_dist, left_line, right_line)
+            # if coll_type == '':
+            #     coll_type = 'none'
+            # return [coll_type, min_dist]
 
 
 class GolfBall(GameSprite):
@@ -328,8 +359,9 @@ class TerrainSprite(GameSprite):
 
         if image_id == 20 or image_id == 27:
             self.cshape = None
-        if image_id == 6:
+        elif image_id == 6:
             # self.cshape = rect(hole_geom)
+            self.is_hole = True
             self.cshape = (((x - 24, y + 24), (x + 24, y + 24)),
                            ((x + 24, y + 24), (x + 24, y - 24)),
                            ((x - 24, y - 24), (x + 24, y - 24)),
