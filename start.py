@@ -18,6 +18,7 @@ bgLayer = cl.Layer()
 game_layer = cl.Layer()
 gravity = -0.2
 tile_size = 48
+EPSILON = 0.001
 
 
 class RubberBandLine(cocos.draw.Line):
@@ -57,7 +58,7 @@ class GravityAction(cmove.Move):
         self.target.position = (x, y)  # Start at top of window
 
     def step(self, dt):
-        self.y_velocity += gravity
+        self.y_velocity += gravity * dt
         (x, y) = self.target.position
 
         new_y_pos = y + self.y_velocity
@@ -66,18 +67,29 @@ class GravityAction(cmove.Move):
                                                  ((x, y), (x + self.x_velocity, y + self.y_velocity)))
 
         if len(coll_info):
-            print ('')
+            print ('Collision Occured!')
+            velocities = coll_info.values()
+            dx = 0
+            dy = 0
+            count = 0
 
-        # if ('horizontal' in coll_info[0]):
-        #     if self.y_velocity != 0:
-        #         self.y_velocity *= -0.5
-        #     if self.y_velocity < 0.2:
-        #         self.y_velocity = 0
-        #
-        #     if self.x_velocity != 0:
-        #         self.x_velocity *= 0.999
-        #     if self.x_velocity < 0.01:
-        #         self.x_velocity = 0
+            for velocity in velocities:
+                dx += velocity[1][0] - velocity[0][0]
+                dy += velocity[1][1] - velocity[0][1]
+                count += 1
+
+            self.x_velocity = dx / count
+            self.y_velocity = dy / count
+            # if ('horizontal' in coll_info[0]):
+            #     if self.y_velocity != 0:
+            #         self.y_velocity *= -0.5
+            #     if self.y_velocity < 0.2:
+            #         self.y_velocity = 0
+            #
+            #     if self.x_velocity != 0:
+            #         self.x_velocity *= 0.999
+            #     if self.x_velocity < 0.01:
+            #         self.x_velocity = 0
 
         new_y_pos = y + self.y_velocity
         new_x_pos = x + self.x_velocity
@@ -109,11 +121,11 @@ class GameSprite(cocos.sprite.Sprite):
     def handleCollisions(center, radius, vel):
         """ """
         objects = GameSprite.live_instances.values()
-        ret_coll = []  # type: List[float]
+        ret_coll = {}  # type: map(float)
         for sprite in objects:
             if sprite.type != 'ball' and sprite.cshape != None:
                 reflect_info = sprite.detectCollision(sprite.cshape, center, radius, vel, False)
-                if reflect_info[0] != 0 and reflect_info[1] !=0:
+                if reflect_info != ((0, 0),(0, 0)) and sprite.euclDist(reflect_info[0], reflect_info[1]) > 0:
                     ret_coll[len(ret_coll)] = reflect_info
         return ret_coll
 
@@ -172,20 +184,24 @@ class GameSprite(cocos.sprite.Sprite):
         y1 = line[0][1]
         y2 = line[1][1]
 
-        A1 = float(y2 - y1)
-        B1 = float(x2 - x1)
-        C1 = (y2 - y1) * x1 + (x1 - x2) * y1
-        C2 = -B1 * x + A1 * y
-        det = A1 * A1 - -B1 * B1
+        xDelta = x2 - x1
+        yDelta = y2 - y1
 
-        if det != 0:
-            cx = (float)((A1 * C1 - B1 * C2) / det)
-            cy = (float)((A1 * C2 - -B1 * C1) / det)
-            return (cx, cy)
+        part1 = ((x - x1) * xDelta)
+        part2 = ((y - y1) * yDelta)
+        sum = part1 + part2
+        divisor = (xDelta * xDelta + yDelta * yDelta)
+        u = (float)(part1 + part2) / divisor
+        closestPoint = (0, 0)
+        if (u < 0):
+            closestPoint = (x1, y1)
+        elif (u > 1):
+            closestPoint = (x2, y2)
         else:
-            cx = x
-            cy = y
-            return (cx, cy)
+            closestPoint = ((int)(x1 + u * xDelta), (int)(y1 + u * yDelta))
+
+
+        return (closestPoint)
 
     def lineSegIntersect(self, line1, line2):
         # calculate line info for first line
@@ -219,13 +235,17 @@ class GameSprite(cocos.sprite.Sprite):
             return (x, y)
 
     def isPointOnLine(self, point, line):
-        return (line[0][0] <= point[0] and point[0] <= line[1][0]) and \
-                (line[1][0] <= point[1] and point[1] <= line[1][1])
+        d_x = line[1][0] - line[0][0]
+        if d_x < EPSILON:
+            # Vertical line, check if y1 < y < y2
+            return (line[0][1] <= point[1] and point[1] <= line[1][1])
+        else:
+            # Horizontal line, check if x1 < x < x2
+            return (line[0][0] <= point[0] and point[0] <= line[1][0])
 
     def detectCollision(self, geom, center, r, vel, is_hole):
-        # type: (list[((int, int), (int, int))], (int, int), int, (float, float), bool) -> list[float, float]
-
-        # if is_hole == False:
+        # type: (list[((int, int), (int, int))], (int, int), int, (float, float), bool) -> ((float, float), (float, float))
+        ret = {}  # type: list[(float, float)]
         for line in geom:
             """
             a: where the velocity vector would intersect the ray
@@ -233,13 +253,39 @@ class GameSprite(cocos.sprite.Sprite):
             c: the closest point on the movement vector to the start of the ray
             d: the closest point on the movement vector to the end of the ray
             """
-            ret = [] # type: list[float, float]
+
+            if (line[0][0] == 48 and line[0][1] == 240):
+                print ("here's where I want to be")
             a = self.lineSegIntersect(line, vel)        # type: (int, int)
             b = self.closestPlaceOnLine(line, vel[1])   # type: (int, int)
             c = self.closestPlaceOnLine(vel, line[0])   # type: (int, int)
             d = self.closestPlaceOnLine(vel, line[1])   # type: (int, int)
             p1 = self.closestPlaceOnLine(line, center)  # type: (int, int)
             vel_abs = self.euclDist(vel[0], vel[1])     # type: float
+
+            # TODO: fix this
+            if (self.euclDist(center, p1) < r):
+                # The circle is touching the line, even before translation
+                if (line[0][0] == line[1][0]):
+                    # If x1 == x2, the line is vertical, reflect x velocity
+                    dx = vel[1][0] - vel[0][0]
+                    return (vel[0], numpy.subtract(vel[0], (-1 * dx, 0)))
+                else:
+                    # If x1 != x2, the line is horizontal, reflect y velocity
+                    dy = vel[1][1] - vel[0][1]
+                    return (vel[0], numpy.subtract(vel[0], (0, -1 * dy)))
+
+            poss1 = self.isPointOnLine(a, vel)
+            poss12 = self.isPointOnLine(a, line)
+            poss2 = self.euclDist(b, vel[1]) < r
+            poss22 = self.isPointOnLine(b, line)
+            poss3 = self.euclDist(c, line[0]) < r
+            poss32 = self.isPointOnLine(c, vel)
+            poss4 = self.euclDist(d, line[1]) < r
+            poss42 = self.isPointOnLine(d, vel)
+
+
+
             p2 = (0.0, 0.0)                             # type: (float, float)
             if ((a != 'parallel' and self.isPointOnLine(a, vel) and self.isPointOnLine(a, line)) or
                     (self.euclDist(b, vel[1]) < r and self.isPointOnLine(b, line)) or
@@ -257,15 +303,16 @@ class GameSprite(cocos.sprite.Sprite):
                 p1_c = self.euclDist(p1, center)
                 diff = a_c / p1_c
                 similar = (r * (self.euclDist(a, center) / self.euclDist(p1, center)))
-                anti_vel_vect = similar * vel_unit
-                p2 = numpy.subtract(a, anti_vel_vect)
+                back_vel_vect = similar * vel_unit # vector from a to the center of the circle after impact
+                p2 = (a[0] + (back_vel_vect[1][0] - back_vel_vect[0][0]), a[1] - (back_vel_vect[1][1] - back_vel_vect[0][1]))
                 pc = self.closestPlaceOnLine(line, p2)
                 if self.isPointOnLine(pc, line):
                     # Collision with middle of ray. Do reflection collision
                     p3 = numpy.add(p2, numpy.subtract(p1, pc))
-                    r_vec = numpy.subtract(pc, numpy.add(2 * (numpy.subtract(p3, p2)), p2))
-                    r_unit_vec = numpy.divide(r_vec, self.euclDist(r_vec[0], r_vec[1]))
-                    new_vel_vec = numpy.multiply(vel_abs, r_unit_vec)
+                    r_vec = numpy.multiply(numpy.subtract(pc, numpy.add(2 * (numpy.subtract(p3, p2)), p2)), -1)
+                    result_pos = numpy.add(p2, r_vec)
+                    ret_vel = [vel[0], result_pos]
+                    return ret_vel
                 else:
                     # Collision with end-point of ray. Do circle collision
                     self.point_to_use = (0.0, 0.0)
@@ -284,12 +331,10 @@ class GameSprite(cocos.sprite.Sprite):
                     collision_pt = (c_x, c_y)
                     r_vec = (self.point_to_use, collision_pt)
                     normal_r_vec = numpy.divide(r_vec, r)
-                    new_vel_vec = numpy.multiply(normal_r_vec, vel_abs)
-            else:
-                return [0, 0]
-
-
-
+                    return_var = numpy.multiply(normal_r_vec, vel_abs)
+                    return return_var
+        # Return ((0, 0),(0, 0)) to indicate no collision
+        return ((0, 0),(0, 0))
 
 
             # top_line = self.closestPlaceOnLine(geom[0], center)
